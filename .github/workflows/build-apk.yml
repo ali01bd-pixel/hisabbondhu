@@ -1,0 +1,1691 @@
+name: Build HisabBondhu v3.0 Pro APK (All-in-One)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Auto-Generate Project & Compile APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 3. Set up Android SDK (API 35)
+        uses: android-actions/setup-android@v3
+
+      - name: 4. Generate Complete Android Project & v3.0 Pro Source Files
+        run: |
+          mkdir -p app/src/main/java/com/hisabbondhu/app
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap-anydpi-v26
+          mkdir -p app/src/main/res/values
+
+          cat << 'EOF' > settings.gradle.kts
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "HisabBondhu"
+          include(":app")
+          EOF
+
+          cat << 'EOF' > build.gradle.kts
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+          }
+          EOF
+
+          cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          kotlin.code.style=official
+          EOF
+
+          cat << 'EOF' > app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+
+          android {
+              namespace = "com.hisabbondhu.app"
+              compileSdk = 35
+
+              defaultConfig {
+                  applicationId = "com.hisabbondhu.app"
+                  minSdk = 28
+                  targetSdk = 35
+                  versionCode = 3
+                  versionName = "3.0.0"
+              }
+
+              buildTypes {
+                  debug {
+                      isMinifyEnabled = false
+                  }
+              }
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+
+          dependencies {
+              implementation("androidx.core:core-ktx:1.13.1")
+              implementation("androidx.appcompat:appcompat:1.7.0")
+              implementation("androidx.activity:activity-ktx:1.9.1")
+              implementation("androidx.webkit:webkit:1.11.0")
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="HisabBondhu"
+                  android:roundIcon="@mipmap/ic_launcher"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:configChanges="orientation|screenSize|keyboardHidden"
+                      android:exported="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_background.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#005A3F" android:pathData="M0,0h108v108h-108z" />
+              <path android:fillColor="#003826" android:pathData="M0,74 Q54,54 108,82 L108,108 L0,108 Z" />
+          </vector>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_foreground.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M28,36 C28,31.58 31.58,28 36,28 L72,28 C76.42,28 80,31.58 80,36 L80,72 C80,76.42 76.42,80 72,80 L36,80 C31.58,80 28,76.42 28,72 Z" />
+              <path
+                  android:fillColor="#6CDBAC"
+                  android:pathData="M62,48 L82,48 C84.21,48 86,49.79 86,52 L86,56 C86,58.21 84.21,60 82,60 L62,60 C58.69,60 56,57.31 56,54 C56,50.69 58.69,48 62,48 Z" />
+              <path
+                  android:fillColor="#005A3F"
+                  android:pathData="M35,68 L41,68 L41,56 L35,56 Z M44,68 L50,68 L50,48 L44,48 Z M53,68 L59,68 L59,40 L53,40 Z" />
+          </vector>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background" />
+              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/hisabbondhu/app/MainActivity.kt
+          package com.hisabbondhu.app
+
+          import android.Manifest
+          import android.annotation.SuppressLint
+          import android.app.NotificationChannel
+          import android.app.NotificationManager
+          import android.content.ContentValues
+          import android.content.Context
+          import android.content.Intent
+          import android.content.pm.PackageManager
+          import android.net.Uri
+          import android.os.Build
+          import android.os.Bundle
+          import android.os.Environment
+          import android.print.PrintAttributes
+          import android.print.PrintManager
+          import android.provider.MediaStore
+          import android.webkit.*
+          import android.widget.Toast
+          import androidx.activity.OnBackPressedCallback
+          import androidx.activity.result.contract.ActivityResultContracts
+          import androidx.appcompat.app.AppCompatActivity
+          import androidx.core.app.NotificationCompat
+          import androidx.core.content.ContextCompat
+          import java.io.File
+          import java.io.FileOutputStream
+
+          class MainActivity : AppCompatActivity() {
+
+              private lateinit var webView: WebView
+              private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+
+              private val fileChooserLauncher = registerForActivityResult(
+                  ActivityResultContracts.StartActivityForResult()
+              ) { result ->
+                  val uri = result.data?.data
+                  if (result.resultCode == RESULT_OK && uri != null) {
+                      fileUploadCallback?.onReceiveValue(arrayOf(uri))
+                  } else {
+                      fileUploadCallback?.onReceiveValue(null)
+                  }
+                  fileUploadCallback = null
+              }
+
+              private val notifPermLauncher = registerForActivityResult(
+                  ActivityResultContracts.RequestPermission()
+              ) { }
+
+              @SuppressLint("SetJavaScriptEnabled")
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  createNotificationChannel()
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                      if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                          notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                      }
+                  }
+
+                  webView = WebView(this)
+                  setContentView(webView)
+
+                  webView.settings.apply {
+                      javaScriptEnabled = true
+                      domStorageEnabled = true
+                      databaseEnabled = true
+                      allowFileAccess = true
+                      allowContentAccess = true
+                      loadWithOverviewMode = true
+                      useWideViewPort = true
+                      setSupportZoom(false)
+                  }
+
+                  webView.addJavascriptInterface(AndroidBridge(), "AndroidBridge")
+                  webView.webViewClient = WebViewClient()
+
+                  webView.webChromeClient = object : WebChromeClient() {
+                      override fun onShowFileChooser(
+                          webView: WebView?,
+                          filePathCallback: ValueCallback<Array<Uri>>?,
+                          fileChooserParams: FileChooserParams?
+                      ): Boolean {
+                          fileUploadCallback?.onReceiveValue(null)
+                          fileUploadCallback = filePathCallback
+                          val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                              addCategory(Intent.CATEGORY_OPENABLE)
+                              type = "*/*"
+                          }
+                          fileChooserLauncher.launch(Intent.createChooser(intent, "Select Backup JSON File"))
+                          return true
+                      }
+                  }
+
+                  webView.loadUrl("file:///android_asset/index.html")
+
+                  onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                      override fun handleOnBackPressed() {
+                          webView.evaluateJavascript("handleAndroidBack()") { result ->
+                              if (result != "true") {
+                                  finish()
+                              }
+                          }
+                      }
+                  })
+              }
+
+              private fun createNotificationChannel() {
+                  val channel = NotificationChannel(
+                      "hisabbondhu_channel",
+                      "HisabBondhu Reminders",
+                      NotificationManager.IMPORTANCE_HIGH
+                  )
+                  val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                  nm.createNotificationChannel(channel)
+              }
+
+              inner class AndroidBridge {
+
+                  @JavascriptInterface
+                  fun saveFile(filename: String, content: String, mimeType: String) {
+                      runOnUiThread {
+                          try {
+                              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                  val values = ContentValues().apply {
+                                      put(MediaStore.Downloads.DISPLAY_NAME, filename)
+                                      put(MediaStore.Downloads.MIME_TYPE, mimeType)
+                                      put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                                  }
+                                  val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                                  if (uri != null) {
+                                      contentResolver.openOutputStream(uri)?.use { out ->
+                                          out.write(content.toByteArray(Charsets.UTF_8))
+                                      }
+                                  }
+                              } else {
+                                  val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                                  val file = File(dir, filename)
+                                  FileOutputStream(file).use { out ->
+                                      out.write(content.toByteArray(Charsets.UTF_8))
+                                  }
+                              }
+                              Toast.makeText(
+                                  this@MainActivity,
+                                  "Saved to Downloads: $filename",
+                                  Toast.LENGTH_LONG
+                              ).show()
+                          } catch (e: Exception) {
+                              Toast.makeText(
+                                  this@MainActivity,
+                                  "Error saving file: ${e.message}",
+                                  Toast.LENGTH_LONG
+                              ).show()
+                          }
+                      }
+                  }
+
+                  @JavascriptInterface
+                  fun printPdfReport() {
+                      runOnUiThread {
+                          val printManager = getSystemService(Context.PRINT_SERVICE) as PrintManager
+                          val jobName = "HisabBondhu_Financial_Report"
+                          val printAdapter = webView.crpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63(jobName)
+                          printManager.print(jobName, printAdapter, PrintAttributes.Builder().build())
+                      }
+                  }
+
+                  @JavascriptInterface
+                  fun showNotification(title: String, message: String) {
+                      runOnUiThread {
+                          val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                          val notif = NotificationCompat.Builder(this@MainActivity, "hisabbondhu_channel")
+                              .setSmallIcon(R.mipmap.ic_launcher)
+                              .setContentTitle(title)
+                              .setContentText(message)
+                              .setPriority(NotificationCompat.PRIORITY_HIGH)
+                              .setAutoCancel(true)
+                              .build()
+                          nm.notify((System.currentTimeMillis() % 10000).toInt(), notif)
+                      }
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/assets/index.html
+          <!DOCTYPE html>
+          <html lang="bn">
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <title>HisabBondhu Pro (হিসাববন্ধু)</title>
+          <style>
+            :root {
+              --primary: #006C4C;
+              --primary-light: #008960;
+              --primary-dark: #003826;
+              --income: #10B981;
+              --income-bg: rgba(16, 185, 129, 0.12);
+              --expense: #EF4444;
+              --expense-bg: rgba(239, 68, 68, 0.12);
+              --debtor: #0EA5E9;
+              --debtor-bg: rgba(14, 165, 233, 0.12);
+              --creditor: #F59E0B;
+              --creditor-bg: rgba(245, 158, 11, 0.14);
+              --bg: #F1F6F4;
+              --card: #FFFFFF;
+              --text: #0F172A;
+              --muted: #64748B;
+              --border: #E2E8F0;
+              --shadow: 0 8px 24px rgba(0, 56, 38, 0.06);
+            }
+            body.dark {
+              --primary: #34D399;
+              --primary-light: #10B981;
+              --primary-dark: #064E3B;
+              --bg: #0B1110;
+              --card: #151F1C;
+              --text: #F1F5F9;
+              --muted: #94A3B8;
+              --border: #23332E;
+              --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            }
+            * {
+              box-sizing: border-box;
+              font-family: 'Segoe UI', system-ui, -apple-system, 'Noto Sans Bengali', sans-serif;
+              -webkit-tap-highlight-color: transparent;
+            }
+            body {
+              margin: 0; background: var(--bg); color: var(--text);
+              padding-bottom: 92px; transition: background 0.25s, color 0.25s;
+            }
+            header {
+              background: var(--card); color: var(--text); padding: 14px 16px;
+              display: flex; justify-content: space-between; align-items: center;
+              position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--border);
+            }
+            .brand-wrap { display: flex; align-items: center; gap: 10px; }
+            .brand-logo {
+              width: 38px; height: 38px; border-radius: 12px;
+              background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+              display: flex; align-items: center; justify-content: center;
+              color: #fff; font-weight: 800; font-size: 18px;
+            }
+            header h1 { margin: 0; font-size: 17px; font-weight: 800; }
+            header small { display: block; font-size: 11px; color: var(--muted); }
+            .header-actions { display: flex; gap: 6px; }
+            .icon-btn {
+              background: var(--bg); color: var(--text); border: 1px solid var(--border);
+              padding: 7px 11px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+            }
+            .container { padding: 14px; max-width: 720px; margin: 0 auto; }
+            .hero-wrapper {
+              background: linear-gradient(135deg, #005A3F 0%, #00291D 100%);
+              color: #fff; border-radius: 22px; padding: 18px; margin-bottom: 14px;
+              box-shadow: 0 12px 28px rgba(0, 90, 63, 0.25);
+            }
+            .hero-main-bal small { font-size: 12px; opacity: 0.85; }
+            .hero-main-bal h2 { margin: 4px 0 6px 0; font-size: 30px; font-weight: 800; }
+            .hero-pure-tag {
+              display: inline-block; background: rgba(255, 255, 255, 0.14);
+              padding: 3px 9px; border-radius: 20px; font-size: 11px; margin-bottom: 12px;
+            }
+            .hero-side-ledger {
+              display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+              width: 100%; margin-top: 6px; padding-top: 12px;
+              border-top: 1px solid rgba(255,255,255,0.14);
+            }
+            .glass-box {
+              background: rgba(255, 255, 255, 0.1);
+              border: 1px solid rgba(255, 255, 255, 0.16);
+              border-radius: 14px; padding: 10px 12px;
+            }
+            .glass-box small { font-size: 11px; opacity: 0.85; display: block; }
+            .glass-box strong { font-size: 16px; display: block; margin-top: 3px; }
+            .text-cyan { color: #7DD3FC; }
+            .text-amber { color: #FDE047; }
+            .section-head {
+              display: flex; justify-content: space-between; align-items: center;
+              margin: 14px 2px 8px 2px;
+            }
+            .section-head strong { font-size: 14px; }
+            .section-head span { font-size: 12px; color: var(--primary); font-weight: 600; cursor: pointer; }
+            .wallet-strip {
+              display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
+            }
+            .wallet-strip::-webkit-scrollbar { display: none; }
+            .wallet-pill {
+              min-width: 132px; background: var(--card); border: 1px solid var(--border);
+              border-radius: 16px; padding: 12px; box-shadow: var(--shadow); flex-shrink: 0;
+            }
+            .wallet-pill .w-badge {
+              width: 28px; height: 28px; border-radius: 8px;
+              display: flex; align-items: center; justify-content: center;
+              font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 8px;
+            }
+            .wallet-pill small { font-size: 11px; color: var(--muted); display: block; }
+            .wallet-pill strong { font-size: 15px; display: block; margin-top: 2px; }
+            .card {
+              background: var(--card); border: 1px solid var(--border);
+              border-radius: 18px; padding: 15px; margin-bottom: 12px; box-shadow: var(--shadow);
+            }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .stat-card {
+              padding: 13px; border-radius: 16px; border: 1px solid var(--border); background: var(--card);
+            }
+            .stat-inc { color: var(--income); font-weight: 800; font-size: 18px; }
+            .stat-exp { color: var(--expense); font-weight: 800; font-size: 18px; }
+            .action-tile {
+              background: var(--card); border: 1px solid var(--border);
+              border-radius: 14px; padding: 10px 6px; text-align: center; cursor: pointer;
+            }
+            .action-tile .a-icon {
+              width: 36px; height: 36px; border-radius: 10px; margin: 0 auto 6px auto;
+              display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;
+            }
+            .action-tile span { font-size: 11px; font-weight: 600; display: block; }
+            .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
+            .chip {
+              border: 1px solid var(--border); background: var(--card); color: var(--text);
+              padding: 6px 13px; border-radius: 20px; font-size: 12px; font-weight: 600;
+              white-space: nowrap; cursor: pointer;
+            }
+            .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+            input, select {
+              width: 100%; padding: 11px 12px; margin-top: 5px; margin-bottom: 10px;
+              border-radius: 12px; border: 1px solid var(--border);
+              background: var(--bg); color: var(--text); font-size: 14px;
+            }
+            .btn {
+              background: var(--primary); color: #fff; border: none; padding: 12px 16px;
+              border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 14px;
+            }
+            .btn-outline {
+              background: transparent; color: var(--text); border: 1px solid var(--border);
+              padding: 7px 11px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600;
+            }
+            .btn-danger {
+              background: var(--expense-bg); color: var(--expense); border: none;
+              padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px;
+            }
+            .tx-row {
+              display: flex; justify-content: space-between; align-items: center;
+              padding: 11px 0; border-bottom: 1px solid var(--border); gap: 10px;
+            }
+            .tx-row:last-child { border-bottom: none; }
+            .badge {
+              display: inline-block; padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 700;
+            }
+            .badge-debtor { background: var(--debtor-bg); color: var(--debtor); }
+            .badge-creditor { background: var(--creditor-bg); color: var(--creditor); }
+            .progress-bar { width: 100%; height: 9px; background: var(--border); border-radius: 9px; overflow: hidden; margin: 8px 0; }
+            .progress-fill { height: 100%; background: var(--income); transition: width 0.35s ease; }
+            .fab {
+              position: fixed; right: 18px; bottom: 76px;
+              width: 54px; height: 54px; border-radius: 18px;
+              background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+              color: #fff; border: none; font-size: 26px; font-weight: 700;
+              box-shadow: 0 8px 20px rgba(0, 108, 76, 0.4);
+              cursor: pointer; z-index: 45; display: flex; align-items: center; justify-content: center;
+            }
+            .bottom-nav {
+              position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
+              border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+              padding: 9px 0; z-index: 45;
+            }
+            .bottom-nav button {
+              background: none; border: none; color: var(--muted); font-size: 11px;
+              display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+            }
+            .bottom-nav button.active { color: var(--primary); font-weight: 800; }
+            .nav-ico { font-size: 17px; }
+            .modal-backdrop {
+              position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55);
+              z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px;
+            }
+            .modal-box {
+              background: var(--card); color: var(--text); border-radius: 20px;
+              max-width: 420px; width: 100%; padding: 18px;
+              box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;
+            }
+            #toastBar {
+              position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+              background: #1E293B; color: #fff; padding: 10px 18px; border-radius: 30px;
+              font-size: 13px; font-weight: 600; z-index: 500;
+            }
+            .hidden { display: none !important; }
+            #lockScreen {
+              position: fixed; inset: 0; background: var(--bg); z-index: 900;
+              display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px;
+            }
+            .due-banner {
+              background: var(--creditor-bg); border: 1px solid var(--creditor);
+              color: var(--text); padding: 10px 14px; border-radius: 14px;
+              margin-bottom: 12px; font-size: 12px; font-weight: 600;
+            }
+          </style>
+          </head>
+          <body>
+
+          <div id="toastBar" class="hidden"></div>
+
+          <div id="customModal" class="modal-backdrop hidden">
+            <div class="modal-box">
+              <h3 id="modalTitle" style="margin:0 0 8px 0;font-size:16px;"></h3>
+              <p id="modalMsg" style="margin:0 0 12px 0;font-size:13px;color:var(--muted);"></p>
+              <input type="number" id="modalInput" step="any" class="hidden">
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn-outline" style="flex:1;" onclick="closeModal()">বাতিল</button>
+                <button class="btn" style="flex:1;" id="modalConfirmBtn">নিশ্চিত করুন</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="quickTxModal" class="modal-backdrop hidden">
+            <div class="modal-box">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong id="t_quickAdd">নতুন আয় বা ব্যয় যোগ করুন</strong>
+                <button class="btn-outline" onclick="closeQuickTxModal()">✕</button>
+              </div>
+              <select id="txType" onchange="updateCategorySuggestions()">
+                <option value="EXPENSE" id="opt_exp">ব্যয় (Expense)</option>
+                <option value="INCOME" id="opt_inc">আয় (Income)</option>
+              </select>
+              <input type="number" id="txAmount" step="any" placeholder="টাকার পরিমাণ (Amount)">
+              <select id="txCategorySelect" onchange="syncCustomCategoryInput()"></select>
+              <input type="text" id="txCategoryCustom" class="hidden" placeholder="কাস্টম ক্যাটাগরির নাম লিখুন">
+              <select id="txAccount"></select>
+              <input type="date" id="txDate">
+              <input type="text" id="txNote" placeholder="নোট বা বিবরণ (ঐচ্ছিক)">
+              <button class="btn" onclick="addTransaction()" id="t_saveBtn">সংরক্ষণ করুন (Save)</button>
+            </div>
+          </div>
+
+          <div id="lockScreen" class="hidden">
+            <div class="card" style="max-width:340px;width:100%;text-align:center;">
+              <div class="brand-logo" style="margin:0 auto 12px auto;width:52px;height:52px;font-size:24px;">৳</div>
+              <h2 id="t_lockTitle" style="margin:0 0 12px 0;">হিসাববন্ধু লক</h2>
+              <input type="password" id="pinUnlockInput" placeholder="PIN" style="text-align:center;font-size:20px;letter-spacing:4px;">
+              <button class="btn" onclick="unlockApp()">আনলক করুন (Unlock)</button>
+            </div>
+          </div>
+
+          <header>
+            <div class="brand-wrap">
+              <div class="brand-logo">হ</div>
+              <div>
+                <h1 id="t_appTitle">হিসাববন্ধু (HisabBondhu)</h1>
+                <small id="t_tagline">আপনার ব্যক্তিগত আর্থিক সঙ্গী</small>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button class="icon-btn" onclick="showSection('wallets')" id="t_walletsBtn">ওয়ালেট</button>
+              <button class="icon-btn" onclick="showSection('settings')" id="t_settingsBtn">সেটিংস</button>
+            </div>
+          </header>
+
+          <div class="container">
+            <div id="dueReminderBanner" class="due-banner hidden"></div>
+
+            <!-- 1. HOME DASHBOARD -->
+            <div id="sec_home">
+              <div class="chips">
+                <button class="chip active" onclick="setRange('ALL', this)" id="t_rangeAll">সব সময়</button>
+                <button class="chip" onclick="setRange('TODAY', this)" id="t_rangeToday">আজ</button>
+                <button class="chip" onclick="setRange('MONTH', this)" id="t_rangeMonth">এই মাস</button>
+                <button class="chip" onclick="setRange('YEAR', this)" id="t_rangeYear">এই বছর</button>
+              </div>
+
+              <div class="hero-wrapper">
+                <div class="hero-main-bal">
+                  <small id="t_totalBalance">মেইন ব্যালেন্স (সকল ওয়ালেট ও ক্যাশ)</small>
+                  <h2 id="val_totalBalance">৳ 0</h2>
+                  <span class="hero-pure-tag" id="t_pureNote">✔ শুধুমাত্র ক্যাশ ও ওয়ালেট ব্যালেন্স (দেনা-পাওনা মুক্ত)</span>
+                </div>
+
+                <div class="grid-2" style="font-size:12px;margin-bottom:8px;opacity:0.92;">
+                  <div><span id="t_todayInc">আজকের আয়:</span> <strong id="val_todayInc">৳ 0</strong></div>
+                  <div><span id="t_todayExp">আজকের ব্যয়:</span> <strong id="val_todayExp">৳ 0</strong></div>
+                </div>
+
+                <div class="hero-side-ledger">
+                  <div class="glass-box" onclick="showSection('loans')" style="cursor:pointer;">
+                    <small id="t_debtorLabel">মোট দেনাদার (আমি পাবো)</small>
+                    <strong class="text-cyan" id="val_receivable">৳ 0</strong>
+                  </div>
+                  <div class="glass-box" onclick="showSection('loans')" style="cursor:pointer;">
+                    <small id="t_creditorLabel">মোট পাওনাদার (আমার কাছে পাবে)</small>
+                    <strong class="text-amber" id="val_payable">৳ 0</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-head">
+                <strong id="t_accStripTitle">কোন অ্যাকাউন্টে কত আছে (ওয়ালেট ব্যালেন্স)</strong>
+                <span onclick="showSection('wallets')" id="t_manageWalletsLink">ট্রান্সফার / এডিট →</span>
+              </div>
+              <div class="wallet-strip" id="homeWalletStrip"></div>
+
+              <div class="grid-2" style="margin-top:12px;">
+                <div class="stat-card">
+                  <small style="color:var(--muted);" id="t_totalIncome">মোট আয় (Income)</small>
+                  <div class="stat-inc" id="val_totalInc">৳ 0</div>
+                </div>
+                <div class="stat-card">
+                  <small style="color:var(--muted);" id="t_totalExpense">মোট ব্যয় (Expense)</small>
+                  <div class="stat-exp" id="val_totalExp">৳ 0</div>
+                </div>
+              </div>
+
+              <div class="grid-4" style="margin:12px 0;">
+                <div class="action-tile" onclick="openQuickTxModal('INCOME')">
+                  <div class="a-icon" style="background:var(--income-bg);color:var(--income);">+</div>
+                  <span id="t_qaInc">আয় যোগ</span>
+                </div>
+                <div class="action-tile" onclick="openQuickTxModal('EXPENSE')">
+                  <div class="a-icon" style="background:var(--expense-bg);color:var(--expense);">−</div>
+                  <span id="t_qaExp">ব্যয় যোগ</span>
+                </div>
+                <div class="action-tile" onclick="showSection('loans')">
+                  <div class="a-icon" style="background:var(--debtor-bg);color:var(--debtor);">⇄</div>
+                  <span id="t_qaLoan">দেনা-পাওনা</span>
+                </div>
+                <div class="action-tile" onclick="showSection('wallets')">
+                  <div class="a-icon" style="background:var(--creditor-bg);color:var(--creditor);">🏦</div>
+                  <span id="t_qaTransfer">ট্রান্সফার</span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong id="t_budgetStatus">মাসিক বাজেটের অবস্থা</strong>
+                  <small id="val_budgetText" style="font-weight:700;">৳ 0 / ৳ 0</small>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="budgetBar" style="width:0%"></div></div>
+                <small id="budgetAlert" style="color:var(--expense);font-weight:700;"></small>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <strong>সাম্প্রতিক আয় ও ব্যয়</strong>
+                  <span style="font-size:12px;color:var(--primary);cursor:pointer;font-weight:600;" onclick="showSection('transactions')">সব দেখুন →</span>
+                </div>
+                <div id="homeRecentTxContainer"></div>
+              </div>
+            </div>
+
+            <!-- 2. TRANSACTIONS -->
+            <div id="sec_transactions" class="hidden">
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <strong>আয় ও ব্যয়ের সম্পূর্ণ ইতিহাস</strong>
+                  <button class="btn-outline" onclick="openQuickTxModal('EXPENSE')">+ নতুন লেনদেন</button>
+                </div>
+                <input type="text" id="searchTx" placeholder="ক্যাটাগরি, ওয়ালেট, তারিখ বা নোট দিয়ে খুঁজুন..." oninput="renderAll()">
+                <div id="txListContainer"></div>
+              </div>
+            </div>
+
+            <!-- 3. LOANS (SEPARATE DEBTOR & CREDITOR LEDGER) -->
+            <div id="sec_loans" class="hidden">
+              <div class="grid-2" style="margin-bottom:12px;">
+                <div class="stat-card" style="border-left:4px solid var(--debtor);">
+                  <small>মোট দেনাদার (আমি পাবো)</small>
+                  <div style="font-size:18px;font-weight:800;color:var(--debtor);" id="val_loanTabReceivable">৳ 0</div>
+                </div>
+                <div class="stat-card" style="border-left:4px solid var(--creditor);">
+                  <small>মোট পাওনাদার (আমার কাছে পাবে)</small>
+                  <div style="font-size:18px;font-weight:800;color:var(--creditor);" id="val_loanTabPayable">৳ 0</div>
+                </div>
+              </div>
+
+              <div class="card">
+                <strong>দেনাদার বা পাওনাদারের হিসাব যোগ করুন</strong>
+                <small style="display:block;color:var(--primary);font-weight:600;margin:4px 0 8px 0;">
+                  ℹ️ এই হিসাব সম্পূর্ণ আলাদা খাতায় থাকবে—আপনার মেইন ব্যালেন্স বা ওয়ালেট ব্যালেন্স পরিবর্তন করবে না।
+                </small>
+                <select id="loanType">
+                  <option value="RECEIVABLE">দেনাদার — আমার কাছ থেকে ধার নিয়েছে (আমি পাবো)</option>
+                  <option value="PAYABLE">পাওনাদার — আমি ধার নিয়েছি (আমার কাছে পাবে)</option>
+                </select>
+                <input type="text" id="loanPerson" placeholder="ব্যক্তি বা প্রতিষ্ঠানের নাম">
+                <input type="tel" id="loanPhone" placeholder="ফোন নম্বর (ঐচ্ছিক)">
+                <input type="number" id="loanAmount" step="any" placeholder="টাকার পরিমাণ">
+                <label style="font-size:12px;color:var(--muted);">পরিশোধের সম্ভাব্য তারিখ ও রিমাইন্ডার সময়:</label>
+                <input type="datetime-local" id="loanDue">
+                <input type="text" id="loanNote" placeholder="বিবরণ বা রেফারেন্স নোট (ঐচ্ছিক)">
+                <button class="btn" onclick="addLoan()">সংরক্ষণ ও রিমাইন্ডার সেট করুন</button>
+              </div>
+
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <strong>দেনাদার ও পাওনাদার তালিকা</strong>
+                  <select id="loanFilter" style="width:auto;margin:0;padding:5px 10px;" onchange="renderAll()">
+                    <option value="ALL">সব (All)</option>
+                    <option value="RECEIVABLE">শুধু দেনাদার (আমি পাবো)</option>
+                    <option value="PAYABLE">শুধু পাওনাদার (পাবে)</option>
+                  </select>
+                </div>
+                <div id="loanListContainer"></div>
+              </div>
+            </div>
+
+            <!-- 4. SHOPPING LIST -->
+            <div id="sec_shopping" class="hidden">
+              <div class="card">
+                <div class="grid-2">
+                  <div><small>আনুমানিক বাজার খরচ</small><div style="font-weight:800;font-size:17px;" id="val_shopEst">৳ 0</div></div>
+                  <div><small>কেনা হয়েছে (মেইন ব্যালেন্স থেকে ব্যয়)</small><div class="stat-exp" id="val_shopAct">৳ 0</div></div>
+                </div>
+              </div>
+              <div class="card">
+                <strong>বাজারের তালিকায় পণ্য যোগ করুন</strong>
+                <input type="text" id="shopName" placeholder="পণ্যের নাম (যেমন: চাল, তেল, পেঁয়াজ)">
+                <div class="grid-2">
+                  <input type="text" id="shopQty" placeholder="পরিমাণ (যেমন: ৫ কেজি)" value="1">
+                  <input type="number" id="shopPrice" step="any" placeholder="আনুমানিক দাম">
+                </div>
+                <label style="font-size:12px;color:var(--muted);">কোন ওয়ালেট থেকে বাজার করবেন:</label>
+                <select id="shopAccount"></select>
+                <button class="btn" onclick="addShoppingItem()">তালিকায় যোগ করুন</button>
+              </div>
+              <div class="card">
+                <small style="color:var(--muted);">চেকবক্সে টিক (✔) দিলে প্রকৃত দাম নিশ্চিত করে সংশ্লিষ্ট ওয়ালেট থেকে স্বয়ংক্রিয়ভাবে ব্যয় তৈরি হবে:</small>
+                <div id="shopListContainer" style="margin-top:8px;"></div>
+              </div>
+            </div>
+
+            <!-- 5. REPORTS -->
+            <div id="sec_reports" class="hidden">
+              <div class="card">
+                <strong>আর্থিক রিপোর্ট ও ক্যাটাগরি বিশ্লেষণ</strong>
+                <div id="reportSummaryText" style="font-size:13px;line-height:1.6;margin:10px 0;"></div>
+                <div id="categoryBreakdownContainer"></div>
+              </div>
+              <div class="card grid-2">
+                <button class="btn" onclick="exportCSV()">CSV ডাউনলোড</button>
+                <button class="btn-outline" onclick="printReport()">PDF প্রিন্ট / সেভ</button>
+              </div>
+            </div>
+
+            <!-- 6. WALLETS -->
+            <div id="sec_wallets" class="hidden">
+              <div class="card">
+                <strong>কোন অ্যাকাউন্টে কত আছে (ব্যালেন্স সেট / এডিট)</strong>
+                <small style="display:block;color:var(--muted);margin-bottom:8px;">
+                  যেকোনো ওয়ালেটের ✎ বাটনে ট্যাপ করে আপনার বর্তমান ক্যাশ বা ওয়ালেট ব্যালেন্স সরাসরি ঠিক করতে পারবেন:
+                </small>
+                <div id="walletListContainer"></div>
+              </div>
+
+              <div class="card">
+                <strong>ওয়ালেট ট্রান্সফার (আয় বা ব্যয় বাড়বে না)</strong>
+                <div class="grid-2" style="margin-top:6px;">
+                  <div>
+                    <small>যে ওয়ালেট থেকে যাবে:</small>
+                    <select id="trFrom"></select>
+                  </div>
+                  <div>
+                    <small>যে ওয়ালেটে জমা হবে:</small>
+                    <select id="trTo"></select>
+                  </div>
+                </div>
+                <input type="number" id="trAmount" step="any" placeholder="ট্রান্সফার টাকার পরিমাণ">
+                <button class="btn" onclick="transferWallet()">ট্রান্সফার সম্পন্ন করুন</button>
+              </div>
+
+              <div class="card">
+                <strong>নতুন কাস্টম ওয়ালেট বা ব্যাংক অ্যাকাউন্ট যোগ করুন</strong>
+                <input type="text" id="newWalletName" placeholder="ওয়ালেটের নাম (যেমন: ইসলামী ব্যাংক / ক্যাশ বাক্স)">
+                <input type="number" id="newWalletBal" step="any" placeholder="বর্তমান ব্যালেন্স (Opening Balance)">
+                <button class="btn" onclick="addWallet()">ওয়ালেট সংরক্ষণ করুন</button>
+              </div>
+            </div>
+
+            <!-- 7. SETTINGS -->
+            <div id="sec_settings" class="hidden">
+              <div class="card">
+                <strong>ভাষা পরিবর্তন করুন (Language)</strong>
+                <div class="chips" style="margin-top:8px;">
+                  <button class="chip" id="langChip_bn" onclick="setLang('bn')">বাংলা (Bengali)</button>
+                  <button class="chip" id="langChip_en" onclick="setLang('en')">English</button>
+                </div>
+                <strong>মুদ্রা (Currency) ও ডার্ক মোড</strong>
+                <div class="grid-2" style="margin-top:6px;">
+                  <select id="currencySelect" onchange="changeCurrency(this.value)">
+                    <option value="৳">BDT (৳)</option>
+                    <option value="$">USD ($)</option>
+                    <option value="€">EUR (€)</option>
+                    <option value="£">GBP (£)</option>
+                  </select>
+                  <button class="btn-outline" onclick="toggleDark()">🌙 ডার্ক / লাইট মোড</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <strong>মাসিক সামগ্রিক বাজেট নির্ধারণ</strong>
+                <input type="number" id="budgetLimitInput" step="any" placeholder="মাসিক বাজেটের পরিমাণ (যেমন: 20000)">
+                <button class="btn" onclick="saveBudget()">বাজেট সেভ করুন</button>
+              </div>
+
+              <div class="card">
+                <strong>অ্যাপ লক (PIN সেট করুন)</strong>
+                <input type="password" id="newPinInput" placeholder="৪ সংখ্যার পিন দিন (ফাঁকা রেখে সেভ করলে লক বন্ধ হবে)">
+                <button class="btn" onclick="savePin()">পিন সংরক্ষণ করুন</button>
+              </div>
+
+              <div class="card">
+                <strong>ডাটা ব্যাকআপ এবং রিস্টোর (JSON)</strong>
+                <button class="btn" onclick="downloadBackup()" style="margin:8px 0;">ব্যাকআপ ফাইল ডাউনলোড করুন</button>
+                <label style="font-size:12px;color:var(--muted);">পূর্বে ডাউনলোড করা ব্যাকআপ ফাইল (.json) সিলেক্ট করুন:</label>
+                <input type="file" id="restoreFileInput" accept=".json" onchange="restoreBackup(event)">
+              </div>
+            </div>
+          </div>
+
+          <button class="fab" onclick="openQuickTxModal('EXPENSE')">+</button>
+
+          <nav class="bottom-nav">
+            <button class="active" id="navBtn_home" onclick="showSection('home', this)">
+              <span class="nav-ico">🏠</span><span id="nav_home">হোম</span>
+            </button>
+            <button id="navBtn_transactions" onclick="showSection('transactions', this)">
+              <span class="nav-ico">📄</span><span id="nav_tx">লেনদেন</span>
+            </button>
+            <button id="navBtn_loans" onclick="showSection('loans', this)">
+              <span class="nav-ico">🤝</span><span id="nav_loans">দেনা-পাওনা</span>
+            </button>
+            <button id="navBtn_shopping" onclick="showSection('shopping', this)">
+              <span class="nav-ico">🛒</span><span id="nav_shop">বাজার</span>
+            </button>
+            <button id="navBtn_reports" onclick="showSection('reports', this)">
+              <span class="nav-ico">📊</span><span id="nav_rep">রিপোর্ট</span>
+            </button>
+          </nav>
+
+          <script>
+          const STORAGE_KEY = 'hisabbondhu_db_v3_pro';
+          let currentRange = 'ALL';
+          let activeSection = 'home';
+
+          function handleAndroidBack() {
+            if (!document.getElementById('customModal').classList.contains('hidden')) {
+              closeModal();
+              return true;
+            }
+            if (!document.getElementById('quickTxModal').classList.contains('hidden')) {
+              closeQuickTxModal();
+              return true;
+            }
+            if (activeSection !== 'home') {
+              showSection('home', document.getElementById('navBtn_home'));
+              return true;
+            }
+            return false;
+          }
+
+          function getLocalDateStr(d = new Date()) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+
+          function showToast(msg) {
+            const bar = document.getElementById('toastBar');
+            bar.innerText = msg;
+            bar.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => bar.classList.add('hidden'), 2600);
+          }
+
+          let modalCallback = null;
+          function openModal({ title, msg, showInput = false, defaultValue = '', onConfirm }) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMsg').innerText = msg || '';
+            const inp = document.getElementById('modalInput');
+            if (showInput) {
+              inp.classList.remove('hidden');
+              inp.value = defaultValue;
+              setTimeout(() => inp.focus(), 80);
+            } else {
+              inp.classList.add('hidden');
+            }
+            modalCallback = onConfirm;
+            document.getElementById('customModal').classList.remove('hidden');
+          }
+
+          function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+            modalCallback = null;
+          }
+
+          document.getElementById('modalConfirmBtn').onclick = function () {
+            const val = document.getElementById('modalInput').value;
+            const cb = modalCallback;
+            closeModal();
+            if (cb) cb(val);
+          };
+
+          const defaultWallets = [
+            { id: 1, nameBn: 'নগদ ক্যাশ (Cash)', nameEn: 'Cash in Hand', color: '#10B981', icon: '💵', balance: 0 },
+            { id: 2, nameBn: 'ব্যাংক অ্যাকাউন্ট', nameEn: 'Bank Account', color: '#3B82F6', icon: '🏦', balance: 0 },
+            { id: 3, nameBn: 'বিকাশ (bKash)', nameEn: 'bKash', color: '#E11D48', icon: 'ব', balance: 0 },
+            { id: 4, nameBn: 'নগদ ওয়ালেট (Nagad)', nameEn: 'Nagad', color: '#EA580C', icon: 'ন', balance: 0 },
+            { id: 5, nameBn: 'রকেট (Rocket)', nameEn: 'Rocket', color: '#7C3AED', icon: 'র', balance: 0 },
+            { id: 6, nameBn: 'উপায় (Upay)', nameEn: 'Upay', color: '#CA8A04', icon: 'উ', balance: 0 },
+            { id: 7, nameBn: 'অন্যান্য (Other)', nameEn: 'Other', color: '#64748B', icon: '💳', balance: 0 }
+          ];
+
+          const expenseCategories = [
+            { bn: 'খাবার ও বাজার', en: 'Food & Grocery' },
+            { bn: 'যাতায়াত', en: 'Transportation' },
+            { bn: 'কেনাকাটা (Shopping)', en: 'Shopping' },
+            { bn: 'বাসা ভাড়া', en: 'House Rent' },
+            { bn: 'বিদ্যুৎ বিল', en: 'Electricity Bill' },
+            { bn: 'পানি বিল', en: 'Water Bill' },
+            { bn: 'ইন্টারনেট বিল', en: 'Internet Bill' },
+            { bn: 'মোবাইল রিচার্জ', en: 'Mobile Recharge' },
+            { bn: 'চিকিৎসা ও ওষুধ', en: 'Medical' },
+            { bn: 'শিক্ষা', en: 'Education' },
+            { bn: 'বিনোদন', en: 'Entertainment' },
+            { bn: 'পারিবারিক খরচ', en: 'Family Expenses' },
+            { bn: 'ব্যক্তিগত খরচ', en: 'Personal Expenses' },
+            { bn: 'ভ্রমণ', en: 'Travel' },
+            { bn: 'অন্যান্য ব্যয়', en: 'Other Expenses' },
+            { bn: '+ কাস্টম ক্যাটাগরি...', en: '+ Custom Category...' }
+          ];
+
+          const incomeCategories = [
+            { bn: 'বেতন (Salary)', en: 'Salary' },
+            { bn: 'ব্যবসা (Business)', en: 'Business' },
+            { bn: 'ফ্রিল্যান্সিং', en: 'Freelancing' },
+            { bn: 'উপহার (Gift)', en: 'Gift' },
+            { bn: 'বিনিয়োগ থেকে আয়', en: 'Investment Return' },
+            { bn: 'অন্যান্য আয়', en: 'Other Income' },
+            { bn: '+ কাস্টম ক্যাটাগরি...', en: '+ Custom Category...' }
+          ];
+
+          const defaultState = {
+            lang: 'bn',
+            currency: '৳',
+            dark: false,
+            pin: '',
+            monthlyBudget: 0,
+            wallets: defaultWallets,
+            transactions: [],
+            loans: [],
+            shopping: []
+          };
+
+          let db = JSON.parse(localStorage.getItem(STORAGE_KEY)) || JSON.parse(JSON.stringify(defaultState));
+          document.getElementById('txDate').value = getLocalDateStr();
+
+          function walletDisplayName(w) {
+            if (!w) return '';
+            return db.lang === 'en' ? (w.nameEn || w.nameBn) : (w.nameBn || w.nameEn);
+          }
+
+          function saveDB() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+            renderAll();
+          }
+
+          function fmt(num) {
+            const n = Number(num || 0);
+            const locale = db.lang === 'bn' ? 'bn-BD' : 'en-US';
+            return db.currency + ' ' + n.toLocaleString(locale, { maximumFractionDigits: 2 });
+          }
+
+          function openQuickTxModal(defaultType = 'EXPENSE') {
+            document.getElementById('txType').value = defaultType;
+            document.getElementById('txDate').value = getLocalDateStr();
+            updateCategorySuggestions();
+            document.getElementById('quickTxModal').classList.remove('hidden');
+          }
+
+          function closeQuickTxModal() {
+            document.getElementById('quickTxModal').classList.add('hidden');
+          }
+
+          function updateCategorySuggestions() {
+            const type = document.getElementById('txType').value;
+            const list = type === 'INCOME' ? incomeCategories : expenseCategories;
+            const sel = document.getElementById('txCategorySelect');
+            sel.innerHTML = list.map((c, idx) =>
+              `<option value="${idx}">${db.lang === 'en' ? c.en : c.bn}</option>`
+            ).join('');
+            syncCustomCategoryInput();
+          }
+
+          function syncCustomCategoryInput() {
+            const type = document.getElementById('txType').value;
+            const list = type === 'INCOME' ? incomeCategories : expenseCategories;
+            const idx = parseInt(document.getElementById('txCategorySelect').value) || 0;
+            const isCustom = idx === list.length - 1;
+            document.getElementById('txCategoryCustom').classList.toggle('hidden', !isCustom);
+          }
+
+          function showSection(sec, btn) {
+            activeSection = sec;
+            ['home','transactions','loans','shopping','reports','wallets','settings'].forEach(s => {
+              document.getElementById('sec_' + s).classList.add('hidden');
+            });
+            document.getElementById('sec_' + sec).classList.remove('hidden');
+            if (btn) {
+              document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+
+          function setRange(r, btn) {
+            currentRange = r;
+            document.querySelectorAll('#sec_home .chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            renderAll();
+          }
+
+          function addTransaction() {
+            const type = document.getElementById('txType').value;
+            const amount = parseFloat(document.getElementById('txAmount').value);
+            const list = type === 'INCOME' ? incomeCategories : expenseCategories;
+            const catIdx = parseInt(document.getElementById('txCategorySelect').value) || 0;
+            let category = db.lang === 'en' ? list[catIdx].en : list[catIdx].bn;
+            if (catIdx === list.length - 1) {
+              category = document.getElementById('txCategoryCustom').value.trim() || (type === 'INCOME' ? 'Other Income' : 'Other Expense');
+            }
+            const walletId = parseInt(document.getElementById('txAccount').value);
+            const dateStr = document.getElementById('txDate').value || getLocalDateStr();
+            const note = document.getElementById('txNote').value.trim();
+
+            if (!amount || amount <= 0) return showToast('সঠিক টাকার পরিমাণ লিখুন!');
+            const wallet = db.wallets.find(w => w.id === walletId);
+            if (!wallet) return;
+
+            wallet.balance += (type === 'INCOME' ? amount : -amount);
+            db.transactions.unshift({
+              id: Date.now(), type, amount, category, walletId,
+              walletName: walletDisplayName(wallet), date: dateStr, note
+            });
+            document.getElementById('txAmount').value = '';
+            document.getElementById('txNote').value = '';
+            document.getElementById('txCategoryCustom').value = '';
+            closeQuickTxModal();
+            saveDB();
+            showToast('লেনদেন সংরক্ষিত হয়েছে!');
+          }
+
+          function deleteTx(id) {
+            openModal({
+              title: 'লেনদেন মুছে ফেলবেন?',
+              msg: 'এই লেনদেনটি মুছে ফেলা হবে এবং ওয়ালেট ব্যালেন্স স্বয়ংক্রিয়ভাবে সমন্বয় করা হবে।',
+              showInput: false,
+              onConfirm: () => {
+                const idx = db.transactions.findIndex(t => t.id === id);
+                if (idx === -1) return;
+                const tx = db.transactions[idx];
+                const wallet = db.wallets.find(w => w.id === tx.walletId);
+                if (wallet) wallet.balance += (tx.type === 'INCOME' ? -tx.amount : tx.amount);
+                db.shopping.forEach(item => {
+                  if (item.linkedTxId === id) {
+                    item.purchased = false;
+                    item.linkedTxId = null;
+                  }
+                });
+                db.transactions.splice(idx, 1);
+                saveDB();
+                showToast('মুছে ফেলা হয়েছে!');
+              }
+            });
+          }
+
+          function transferWallet() {
+            const fromId = parseInt(document.getElementById('trFrom').value);
+            const toId = parseInt(document.getElementById('trTo').value);
+            const amt = parseFloat(document.getElementById('trAmount').value);
+            if (fromId === toId || !amt || amt <= 0) {
+              return showToast('দুটি ভিন্ন ওয়ালেট এবং সঠিক টাকার পরিমাণ দিন!');
+            }
+            const wFrom = db.wallets.find(w => w.id === fromId);
+            const wTo = db.wallets.find(w => w.id === toId);
+            if (!wFrom || !wTo) return;
+            wFrom.balance -= amt;
+            wTo.balance += amt;
+            document.getElementById('trAmount').value = '';
+            saveDB();
+            showToast('ওয়ালেট ট্রান্সফার সম্পন্ন হয়েছে!');
+          }
+
+          function addWallet() {
+            const name = document.getElementById('newWalletName').value.trim();
+            const bal = parseFloat(document.getElementById('newWalletBal').value) || 0;
+            if (!name) return showToast('ওয়ালেটের নাম লিখুন!');
+            db.wallets.push({ id: Date.now(), nameBn: name, nameEn: name, color: '#0D9488', icon: '💼', balance: bal });
+            document.getElementById('newWalletName').value = '';
+            document.getElementById('newWalletBal').value = '';
+            saveDB();
+            showToast('নতুন ওয়ালেট যুক্ত হয়েছে!');
+          }
+
+          function editWalletBalance(id) {
+            const w = db.wallets.find(x => x.id === id);
+            if (!w) return;
+            openModal({
+              title: walletDisplayName(w),
+              msg: 'এই অ্যাকাউন্টে বর্তমানে প্রকৃত কত টাকা আছে তা লিখুন:',
+              showInput: true,
+              defaultValue: w.balance,
+              onConfirm: (val) => {
+                const num = parseFloat(val);
+                if (!isNaN(num)) {
+                  w.balance = num;
+                  saveDB();
+                  showToast('ওয়ালেট ব্যালেন্স আপডেট হয়েছে!');
+                }
+              }
+            });
+          }
+
+          // Debtor & Creditor Strictly Isolated from Main Balance
+          function addLoan() {
+            const type = document.getElementById('loanType').value;
+            const person = document.getElementById('loanPerson').value.trim();
+            const phone = document.getElementById('loanPhone').value.trim();
+            const amount = parseFloat(document.getElementById('loanAmount').value);
+            const due = document.getElementById('loanDue').value;
+            const note = document.getElementById('loanNote').value.trim();
+
+            if (!person || !amount || amount <= 0) {
+              return showToast('ব্যক্তির নাম এবং সঠিক টাকার পরিমাণ দিন!');
+            }
+            db.loans.unshift({
+              id: Date.now(), type, person, phone, principal: amount,
+              paid: 0, due, note, notified: false, history: []
+            });
+            document.getElementById('loanPerson').value = '';
+            document.getElementById('loanPhone').value = '';
+            document.getElementById('loanAmount').value = '';
+            document.getElementById('loanNote').value = '';
+            saveDB();
+            showToast(type === 'RECEIVABLE' ? 'দেনাদার সংরক্ষিত হয়েছে!' : 'পাওনাদার সংরক্ষিত হয়েছে!');
+          }
+
+          function payLoanPartial(id) {
+            const loan = db.loans.find(l => l.id === id);
+            if (!loan) return;
+            const rem = Math.max(0, loan.principal - loan.paid);
+            if (rem <= 0) return;
+
+            openModal({
+              title: loan.type === 'RECEIVABLE'
+                ? `দেনাদার (${loan.person}) থেকে আদায়`
+                : `পাওনাদার (${loan.person})-কে পরিশোধ`,
+              msg: `বকেয়া রয়েছে: ${fmt(rem)}। কত টাকা কিস্তি বা পরিশোধ জমা করতে চান?`,
+              showInput: true,
+              defaultValue: rem,
+              onConfirm: (val) => {
+                const rawAmt = parseFloat(val);
+                if (isNaN(rawAmt) || rawAmt <= 0) return;
+                const actualPaid = Math.min(rem, rawAmt);
+                loan.paid += actualPaid;
+                if (!Array.isArray(loan.history)) loan.history = [];
+                loan.history.push({ date: getLocalDateStr(), amount: actualPaid });
+                saveDB();
+                showToast('কিস্তি / পরিশোধ আপডেট হয়েছে!');
+              }
+            });
+          }
+
+          function deleteLoan(id) {
+            openModal({
+              title: 'রেকর্ড মুছে ফেলবেন?',
+              msg: 'আপনি কি নিশ্চিতভাবে এই দেনাদার/পাওনাদারের হিসাবটি মুছে ফেলতে চান?',
+              showInput: false,
+              onConfirm: () => {
+                db.loans = db.loans.filter(l => l.id !== id);
+                saveDB();
+                showToast('রেকর্ড মুছে ফেলা হয়েছে!');
+              }
+            });
+          }
+
+          function addShoppingItem() {
+            const name = document.getElementById('shopName').value.trim();
+            const qty = document.getElementById('shopQty').value.trim() || '1';
+            const est = parseFloat(document.getElementById('shopPrice').value) || 0;
+            const walletId = parseInt(document.getElementById('shopAccount').value);
+            if (!name) return showToast('পণ্যের নাম লিখুন!');
+            db.shopping.unshift({
+              id: Date.now(), name, qty, est, actual: est, walletId, purchased: false, linkedTxId: null
+            });
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopPrice').value = '';
+            saveDB();
+            showToast('বাজারের তালিকায় যুক্ত হয়েছে!');
+          }
+
+          function toggleShoppingItem(id) {
+            const item = db.shopping.find(s => s.id === id);
+            if (!item) return;
+            if (!item.purchased) {
+              if (item.linkedTxId) return;
+              openModal({
+                title: `কেনা সম্পন্ন: ${item.name}`,
+                msg: 'পণ্যটির প্রকৃত ক্রয়মূল্য কত হয়েছে? (সংশ্লিষ্ট ওয়ালেট থেকে স্বয়ংক্রিয়ভাবে ব্যয় হবে)',
+                showInput: true,
+                defaultValue: item.est,
+                onConfirm: (val) => {
+                  const actualPrice = parseFloat(val);
+                  if (isNaN(actualPrice) || actualPrice < 0) {
+                    renderAll();
+                    return;
+                  }
+                  const wallet = db.wallets.find(w => w.id === item.walletId) || db.wallets[0];
+                  wallet.balance -= actualPrice;
+                  const txId = Date.now();
+                  db.transactions.unshift({
+                    id: txId, type: 'EXPENSE', amount: actualPrice,
+                    category: 'কেনাকাটা (Shopping)',
+                    walletId: wallet.id, walletName: walletDisplayName(wallet),
+                    date: getLocalDateStr(), note: item.name + ' (' + item.qty + ')'
+                  });
+                  item.purchased = true;
+                  item.actual = actualPrice;
+                  item.linkedTxId = txId;
+                  saveDB();
+                  showToast('বাজারের ব্যয় মেইন ব্যালেন্সে সমন্বয় হয়েছে!');
+                }
+              });
+              renderAll();
+            } else {
+              openModal({
+                title: 'পণ্য আনচেক করবেন?',
+                msg: 'এটি আনচেক করলে এর সাথে যুক্ত ব্যয়ের হিসাবটি মুছে টাকা ওয়ালেটে ফেরত যাবে। নিশ্চিত?',
+                showInput: false,
+                onConfirm: () => {
+                  if (item.linkedTxId) {
+                    const idx = db.transactions.findIndex(t => t.id === item.linkedTxId);
+                    if (idx !== -1) {
+                      const tx = db.transactions[idx];
+                      const wallet = db.wallets.find(w => w.id === tx.walletId);
+                      if (wallet) wallet.balance += tx.amount;
+                      db.transactions.splice(idx, 1);
+                    }
+                    item.linkedTxId = null;
+                  }
+                  item.purchased = false;
+                  saveDB();
+                  showToast('পূর্বাবস্থায় ফেরত নেওয়া হয়েছে!');
+                }
+              });
+              renderAll();
+            }
+          }
+
+          function deleteShoppingItem(id) {
+            const item = db.shopping.find(s => s.id === id);
+            if (!item) return;
+            openModal({
+              title: 'পণ্য মুছে ফেলবেন?',
+              msg: item.purchased
+                ? 'এই পণ্যটি কেনা হয়েছিল। মুছে ফেললে এর ব্যয়টিও ওয়ালেটে ফেরত যাবে।'
+                : 'তালিকা থেকে এই পণ্যটি মুছে ফেলতে চান?',
+              showInput: false,
+              onConfirm: () => {
+                if (item.purchased && item.linkedTxId) {
+                  const idx = db.transactions.findIndex(t => t.id === item.linkedTxId);
+                  if (idx !== -1) {
+                    const tx = db.transactions[idx];
+                    const wallet = db.wallets.find(w => w.id === tx.walletId);
+                    if (wallet) wallet.balance += tx.amount;
+                    db.transactions.splice(idx, 1);
+                  }
+                }
+                db.shopping = db.shopping.filter(s => s.id !== id);
+                saveDB();
+              }
+            });
+          }
+
+          function setLang(l) {
+            db.lang = (l === 'en') ? 'en' : 'bn';
+            updateCategorySuggestions();
+            saveDB();
+          }
+          function changeCurrency(c) { db.currency = c; saveDB(); }
+          function toggleDark() { db.dark = !db.dark; saveDB(); }
+          function saveBudget() {
+            db.monthlyBudget = parseFloat(document.getElementById('budgetLimitInput').value) || 0;
+            saveDB();
+            showToast('মাসিক বাজেট সংরক্ষিত হয়েছে!');
+          }
+          function savePin() {
+            db.pin = document.getElementById('newPinInput').value.trim();
+            saveDB();
+            showToast(db.pin ? 'পিন লক চালু হয়েছে!' : 'পিন লক বন্ধ করা হয়েছে!');
+          }
+          function unlockApp() {
+            if (document.getElementById('pinUnlockInput').value === db.pin) {
+              document.getElementById('lockScreen').classList.add('hidden');
+            } else {
+              showToast('ভুল পিন দিয়েছেন!');
+            }
+          }
+
+          function downloadBackup() {
+            const filename = `HisabBondhu_Backup_${getLocalDateStr()}.json`;
+            const content = JSON.stringify(db, null, 2);
+            if (window.AndroidBridge && window.AndroidBridge.saveFile) {
+              window.AndroidBridge.saveFile(filename, content, 'application/json');
+            } else {
+              const blob = new Blob([content], { type: 'application/json' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = filename;
+              a.click();
+            }
+          }
+
+          function restoreBackup(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              try {
+                const parsed = JSON.parse(evt.target.result);
+                if (parsed.wallets && parsed.transactions) {
+                  db = parsed;
+                  saveDB();
+                  showToast('ব্যাকআপ সফলভাবে রিস্টোর হয়েছে!');
+                }
+              } catch (err) {
+                showToast('সঠিক ব্যাকআপ ফাইল নয়!');
+              }
+            };
+            reader.readAsText(file);
+          }
+
+          function exportCSV() {
+            const filename = `HisabBondhu_Transactions_${getLocalDateStr()}.csv`;
+            let csv = 'Date,Type,Category,Wallet,Amount,Note\n';
+            db.transactions.forEach(t => {
+              csv += `${t.date},${t.type},"${t.category}","${t.walletName}",${t.amount},"${(t.note || '').replace(/"/g, "'")}"\n`;
+            });
+            if (window.AndroidBridge && window.AndroidBridge.saveFile) {
+              window.AndroidBridge.saveFile(filename, csv, 'text/csv');
+            } else {
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = filename;
+              a.click();
+            }
+          }
+
+          function printReport() {
+            if (window.AndroidBridge && window.AndroidBridge.printPdfReport) {
+              window.AndroidBridge.printPdfReport();
+            } else {
+              window.print();
+            }
+          }
+
+          function checkDueReminders() {
+            const now = new Date();
+            const dueLoans = db.loans.filter(l => {
+              const rem = l.principal - l.paid;
+              return rem > 0 && l.due && new Date(l.due) <= now;
+            });
+            const banner = document.getElementById('dueReminderBanner');
+            if (dueLoans.length > 0) {
+              banner.classList.remove('hidden');
+              const names = dueLoans.map(l => `${l.person} (${fmt(l.principal - l.paid)})`).join(', ');
+              banner.innerText = `⏰ রিমাইন্ডার (নির্ধারিত সময় পূর্ণ হয়েছে): ${names}`;
+              dueLoans.forEach(l => {
+                if (!l.notified && window.AndroidBridge && window.AndroidBridge.showNotification) {
+                  window.AndroidBridge.showNotification(
+                    'HisabBondhu রিমাইন্ডার',
+                    `${l.person} — বাকি টাকা: ${fmt(l.principal - l.paid)}`
+                  );
+                  l.notified = true;
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+                }
+              });
+            } else {
+              banner.classList.add('hidden');
+            }
+          }
+
+          function renderAll() {
+            document.body.classList.toggle('dark', !!db.dark);
+            document.getElementById('langChip_bn').classList.toggle('active', db.lang === 'bn');
+            document.getElementById('langChip_en').classList.toggle('active', db.lang === 'en');
+            document.getElementById('currencySelect').value = db.currency;
+
+            const walletOpts = db.wallets.map(w => `<option value="${w.id}">${walletDisplayName(w)} (${fmt(w.balance)})</option>`).join('');
+            ['txAccount','shopAccount','trFrom','trTo'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) {
+                const prev = el.value;
+                el.innerHTML = walletOpts;
+                if (prev && db.wallets.some(w => String(w.id) === String(prev))) el.value = prev;
+              }
+            });
+
+            document.getElementById('homeWalletStrip').innerHTML = db.wallets.map(w => `
+              <div class="wallet-pill" onclick="editWalletBalance(${w.id})">
+                <div class="w-badge" style="background:${w.color || '#006C4C'}">${w.icon || '৳'}</div>
+                <small>${walletDisplayName(w)}</small>
+                <strong>${fmt(w.balance)}</strong>
+              </div>
+            `).join('');
+
+            const todayStr = getLocalDateStr();
+            const monthPrefix = todayStr.slice(0, 7);
+            const yearPrefix = todayStr.slice(0, 4);
+
+            const filteredTx = db.transactions.filter(tx => {
+              if (currentRange === 'TODAY') return tx.date === todayStr;
+              if (currentRange === 'MONTH') return tx.date.startsWith(monthPrefix);
+              if (currentRange === 'YEAR') return tx.date.startsWith(yearPrefix);
+              return true;
+            });
+
+            const totalBal = db.wallets.reduce((s, w) => s + w.balance, 0);
+            const inc = filteredTx.filter(x => x.type === 'INCOME').reduce((s, x) => s + x.amount, 0);
+            const exp = filteredTx.filter(x => x.type === 'EXPENSE').reduce((s, x) => s + x.amount, 0);
+            const todayInc = db.transactions.filter(x => x.type === 'INCOME' && x.date === todayStr).reduce((s, x) => s + x.amount, 0);
+            const todayExp = db.transactions.filter(x => x.type === 'EXPENSE' && x.date === todayStr).reduce((s, x) => s + x.amount, 0);
+
+            const receivableTotal = db.loans.filter(l => l.type === 'RECEIVABLE').reduce((s, l) => s + Math.max(0, l.principal - l.paid), 0);
+            const payableTotal = db.loans.filter(l => l.type === 'PAYABLE').reduce((s, l) => s + Math.max(0, l.principal - l.paid), 0);
+
+            document.getElementById('val_totalBalance').innerText = fmt(totalBal);
+            document.getElementById('val_totalInc').innerText = fmt(inc);
+            document.getElementById('val_totalExp').innerText = fmt(exp);
+            document.getElementById('val_todayInc').innerText = fmt(todayInc);
+            document.getElementById('val_todayExp').innerText = fmt(todayExp);
+            document.getElementById('val_receivable').innerText = fmt(receivableTotal);
+            document.getElementById('val_payable').innerText = fmt(payableTotal);
+            document.getElementById('val_loanTabReceivable').innerText = fmt(receivableTotal);
+            document.getElementById('val_loanTabPayable').innerText = fmt(payableTotal);
+
+            const monthExp = db.transactions.filter(x => x.type === 'EXPENSE' && x.date.startsWith(monthPrefix)).reduce((s, x) => s + x.amount, 0);
+            document.getElementById('val_budgetText').innerText = `${fmt(monthExp)} / ${fmt(db.monthlyBudget)}`;
+            const pct = db.monthlyBudget > 0 ? Math.min(100, Math.round((monthExp / db.monthlyBudget) * 100)) : 0;
+            const bar = document.getElementById('budgetBar');
+            bar.style.width = pct + '%';
+            bar.style.background = pct >= 100 ? 'var(--expense)' : pct >= 80 ? 'var(--creditor)' : 'var(--income)';
+            document.getElementById('budgetAlert').innerText =
+              pct >= 100 ? '⚠️ সতর্কতা: মাসিক বাজেট ১০০% অতিক্রম করেছে!' :
+              pct >= 80 ? '⚠️ সতর্কতা: মাসিক বাজেটের ৮০% খরচ হয়েছে!' : '';
+
+            document.getElementById('homeRecentTxContainer').innerHTML = db.transactions.slice(0, 5).map(x => `
+              <div class="tx-row">
+                <div>
+                  <strong>${x.category}</strong> <small style="color:var(--muted);">(${x.walletName})</small><br>
+                  <small style="color:var(--muted);">${x.date} ${x.note ? '• ' + x.note : ''}</small>
+                </div>
+                <span class="${x.type === 'INCOME' ? 'stat-inc' : 'stat-exp'}" style="font-size:15px;">
+                  ${x.type === 'INCOME' ? '+' : '-'}${fmt(x.amount)}
+                </span>
+              </div>
+            `).join('') || '<small style="color:var(--muted);">এখনও কোনো আয় বা ব্যয় যোগ করা হয়নি।</small>';
+
+            const q = (document.getElementById('searchTx').value || '').toLowerCase();
+            document.getElementById('txListContainer').innerHTML = db.transactions
+              .filter(x => !q || x.category.toLowerCase().includes(q) || (x.walletName||'').toLowerCase().includes(q) || (x.note||'').toLowerCase().includes(q) || String(x.amount).includes(q) || (x.date||'').includes(q))
+              .map(x => `
+                <div class="tx-row">
+                  <div>
+                    <strong>${x.category}</strong> <small style="color:var(--muted);">(${x.walletName})</small><br>
+                    <small style="color:var(--muted);">${x.date} ${x.note ? '• ' + x.note : ''}</small>
+                  </div>
+                  <div style="text-align:right;white-space:nowrap;">
+                    <span class="${x.type === 'INCOME' ? 'stat-inc' : 'stat-exp'}" style="font-size:15px;">${x.type === 'INCOME' ? '+' : '-'}${fmt(x.amount)}</span>
+                    <button class="btn-danger" style="margin-left:6px;" onclick="deleteTx(${x.id})">✕</button>
+                  </div>
+                </div>
+              `).join('') || '<small style="color:var(--muted);">কোনো লেনদেন পাওয়া যায়নি।</small>';
+
+            const lf = document.getElementById('loanFilter').value;
+            document.getElementById('loanListContainer').innerHTML = db.loans
+              .filter(l => lf === 'ALL' || l.type === lf)
+              .map(l => {
+                const rem = Math.max(0, l.principal - l.paid);
+                const isDebtor = l.type === 'RECEIVABLE';
+                const badgeClass = isDebtor ? 'badge-debtor' : 'badge-creditor';
+                const badgeLabel = isDebtor ? 'দেনাদার (আমি পাবো)' : 'পাওনাদার (আমার কাছে পাবে)';
+                const actionLabel = isDebtor ? 'আদায় এন্ট্রি' : 'পরিশোধ এন্ট্রি';
+                const histText = Array.isArray(l.history) && l.history.length > 0
+                  ? `<br><small style="color:var(--income);">কিস্তি জমা: ${l.history.map(h => `${fmt(h.amount)} (${h.date})`).join(', ')}</small>`
+                  : '';
+                return `
+                  <div class="tx-row">
+                    <div>
+                      <strong>${l.person}</strong> <span class="badge ${badgeClass}">${badgeLabel}</span>
+                      ${l.phone ? `<small style="color:var(--muted);"> • 📞 ${l.phone}</small>` : ''}<br>
+                      <small>বাকি: <strong>${fmt(rem)}</strong> / মোট: ${fmt(l.principal)} ${l.due ? '• ⏰ ' + l.due.replace('T',' ') : ''}</small>
+                      ${l.note ? `<br><small style="color:var(--muted);">${l.note}</small>` : ''}
+                      ${histText}
+                    </div>
+                    <div style="white-space:nowrap;">
+                      ${rem > 0 ? `<button class="btn-outline" onclick="payLoanPartial(${l.id})">${actionLabel}</button>` : `<strong style="color:var(--income)">পরিশোধিত</strong>`}
+                      <button class="btn-danger" style="margin-left:4px;" onclick="deleteLoan(${l.id})">✕</button>
+                    </div>
+                  </div>
+                `;
+              }).join('') || '<small style="color:var(--muted);">কোনো দেনাদার বা পাওনাদারের রেকর্ড নেই।</small>';
+
+            const estSum = db.shopping.reduce((s, i) => s + i.est, 0);
+            const actSum = db.shopping.filter(i => i.purchased).reduce((s, i) => s + i.actual, 0);
+            document.getElementById('val_shopEst').innerText = fmt(estSum);
+            document.getElementById('val_shopAct').innerText = fmt(actSum);
+            document.getElementById('shopListContainer').innerHTML = db.shopping.map(item => `
+              <div class="tx-row">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;">
+                  <input type="checkbox" style="width:18px;height:18px;margin:0;" ${item.purchased ? 'checked' : ''} onchange="toggleShoppingItem(${item.id})">
+                  <span><strong>${item.name}</strong> (${item.qty}) — <small>${fmt(item.est)}</small></span>
+                </label>
+                <div style="white-space:nowrap;">
+                  <strong style="color:var(--income)">${item.purchased ? fmt(item.actual) : ''}</strong>
+                  <button class="btn-danger" style="margin-left:6px;" onclick="deleteShoppingItem(${item.id})">✕</button>
+                </div>
+              </div>
+            `).join('') || '<small style="color:var(--muted);">বাজারের তালিকা খালি।</small>';
+
+            document.getElementById('walletListContainer').innerHTML = db.wallets.map(w => `
+              <div class="tx-row">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:32px;height:32px;border-radius:9px;background:${w.color || '#006C4C'};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">
+                    ${w.icon || '৳'}
+                  </div>
+                  <strong>${walletDisplayName(w)}</strong>
+                </div>
+                <div>
+                  <strong>${fmt(w.balance)}</strong>
+                  <button class="btn-outline" style="margin-left:8px;" onclick="editWalletBalance(${w.id})">✎ এডিট</button>
+                </div>
+              </div>
+            `).join('');
+
+            const catMap = {};
+            filteredTx.filter(x => x.type === 'EXPENSE').forEach(x => {
+              catMap[x.category] = (catMap[x.category] || 0) + x.amount;
+            });
+            document.getElementById('reportSummaryText').innerHTML = `
+              • মেইন ব্যালেন্স (সকল ওয়ালেট ও ক্যাশ): <strong>${fmt(totalBal)}</strong><br>
+              • নিট সঞ্চয় (আয় - ব্যয়): <strong>${fmt(inc - exp)}</strong><br>
+              • আলাদা খাতা — মোট দেনাদার (আমি পাবো): <strong style="color:var(--debtor);">${fmt(receivableTotal)}</strong> | মোট পাওনাদার (পাবে): <strong style="color:var(--creditor);">${fmt(payableTotal)}</strong>
+            `;
+
+            const totalCatExp = Object.values(catMap).reduce((a, b) => a + b, 0) || 1;
+            document.getElementById('categoryBreakdownContainer').innerHTML = Object.entries(catMap)
+              .sort((a,b) => b[1] - a[1])
+              .map(([k,v]) => {
+                const p = Math.round((v / totalCatExp) * 100);
+                return `
+                  <div style="margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;">
+                      <span><strong>${k}</strong> (${p}%)</span>
+                      <strong>${fmt(v)}</strong>
+                    </div>
+                    <div class="progress-bar" style="height:6px;margin:4px 0 0 0;">
+                      <div class="progress-fill" style="width:${p}%;background:var(--expense);"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('') || '<small style="color:var(--muted);">এখনও কোনো ব্যয়ের ক্যাটাগরি বিশ্লেষণ নেই।</small>';
+
+            checkDueReminders();
+          }
+
+          if (db.pin) document.getElementById('lockScreen').classList.remove('hidden');
+          updateCategorySuggestions();
+          renderAll();
+          setInterval(checkDueReminders, 60000);
+          </script>
+          </body>
+          </html>
+          EOF
+
+      - name: 5. Install Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: 6. Compile Android APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: 7. Prepare Output APK
+        run: |
+          mkdir -p output_apk
+          cp app/build/outputs/apk/debug/app-debug.apk output_apk/HisabBondhu-v3.0-Pro.apk
+
+      - name: 8. Upload APK to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HisabBondhu-v3.0-Pro-APK
+          path: output_apk/HisabBondhu-v3.0-Pro.apk
+          if-no-files-found: error
+
+      - name: 9. Publish Direct APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v3.0.${{ github.run_number }}
+          name: "HisabBondhu v3.0 Pro APK (Build #${{ github.run_number }})"
+          body: "হিসাববন্ধু (HisabBondhu v3.0 Pro) অ্যাপের সরাসরি ইনস্টলযোগ্য অ্যান্ড্রয়েড APK ফাইল। নিচের Assets থেকে HisabBondhu-v3.0-Pro.apk ডাউনলোড করে সরাসরি আপনার ফোনে ইনস্টল করুন।"
+          files: output_apk/HisabBondhu-v3.0-Pro.apk
